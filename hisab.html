@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Hisab App (Single HTML)</title>
+<style>
+  :root{--green:#0b5;--red:#e11;--bg:#f9fafb;}
+  *{box-sizing:border-box}
+  body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);margin:0}
+  .wrap{max-width:960px;margin:auto;padding:18px}
+  h1{text-align:center;color:var(--green);margin:16px 0}
+  nav{display:flex;gap:10px;justify-content:center;margin:10px 0 18px}
+  nav button{padding:10px 18px;border:none;border-radius:10px;font-weight:700;cursor:pointer;background:#eee}
+  nav button.active{background:var(--green);color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+  .section{display:none} .section.active{display:block}
+  .summary{margin:10px 0;padding:10px;background:#e0f2fe;border:1px solid #bae6fd;border-radius:10px;font-weight:600}
+  form{display:grid;gap:10px;margin:12px 0 16px}
+  input,button{padding:10px;border:1px solid #ccc;border-radius:10px;font-size:16px}
+  .btn-primary{background:var(--green);color:#fff;border:none;font-weight:700;cursor:pointer}
+  .btn-warn{background:#f59e0b;color:#fff;border:none;cursor:pointer}
+  .btn-danger{background:var(--red);color:#fff;border:none;cursor:pointer}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+  .day-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;margin:12px 0;box-shadow:0 2px 6px rgba(0,0,0,.06);overflow:hidden}
+  .day-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f3f4f6;font-weight:700}
+  table{width:100%;border-collapse:collapse}
+  th,td{border:1px solid #eee;padding:8px;text-align:center;font-size:14px}
+  th{background:#f8fafc;font-weight:700}
+  .total-row{background:#fff7ed;font-weight:700}
+  .muted{opacity:.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📒 Income & Kharch हिसाब</h1>
+
+  <nav>
+    <button id="tabKharch" class="active">💸 Kharch</button>
+    <button id="tabIncome">💰 Income</button>
+  </nav>
+
+  <!-- KHARCH PAGE -->
+  <section id="pageKharch" class="section active">
+    <div class="summary" id="sumKharch">इस महीने का कुल खर्च: ₹0</div>
+
+    <form id="formKharch">
+      <input type="date" id="khDate" required />
+      <input type="text" id="khItem" placeholder="खर्च का नाम (जैसे: सब्ज़ी, दूध)" required />
+      <input type="number" id="khAmt" placeholder="₹ राशि" required />
+      <input type="hidden" id="khEdit" />
+      <button class="btn-primary" type="submit" id="khSaveBtn">जोड़ें</button>
+    </form>
+
+    <div class="toolbar">
+      <button id="exportKhCsv" class="btn-warn">⬇️ Kharch CSV</button>
+      <button id="clearKh" class="btn-danger">🧹 सब Kharch साफ़</button>
+    </div>
+
+    <div id="khDays"></div>
+  </section>
+
+  <!-- INCOME PAGE -->
+  <section id="pageIncome" class="section">
+    <div class="summary" id="sumIncome">इस महीने की कुल आय: ₹0</div>
+
+    <form id="formIncome">
+      <input type="date" id="inDate" required />
+      <input type="text" id="inItem" placeholder="Income का स्रोत (Salary, Business…)" required />
+      <input type="number" id="inAmt" placeholder="₹ राशि" required />
+      <input type="hidden" id="inEdit" />
+      <button class="btn-primary" type="submit" id="inSaveBtn">जोड़ें</button>
+    </form>
+
+    <div class="toolbar">
+      <button id="exportInCsv" class="btn-warn">⬇️ Income CSV</button>
+      <button id="clearIn" class="btn-danger">🧹 सब Income साफ़</button>
+    </div>
+
+    <div id="inDays"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  // ==== Tabs ====
+  const tabKh=document.getElementById('tabKharch');
+  const tabIn=document.getElementById('tabIncome');
+  const pageKh=document.getElementById('pageKharch');
+  const pageIn=document.getElementById('pageIncome');
+  tabKh.onclick=()=>{tabKh.classList.add('active');tabIn.classList.remove('active');pageKh.classList.add('active');pageIn.classList.remove('active');}
+  tabIn.onclick=()=>{tabIn.classList.add('active');tabKh.classList.remove('active');pageIn.classList.add('active');pageKh.classList.remove('active');}
+
+  // ==== Storage Keys ====
+  const K_KEY="hisab.kharch.v1";
+  const I_KEY="hisab.income.v1";
+
+  // ==== Helpers ====
+  const load = k => { try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(e){return[]} };
+  const save = (k,v) => localStorage.setItem(k,JSON.stringify(v));
+  const todayStr = () => new Date().toISOString().slice(0,10);
+  const groupByDate = arr => arr.reduce((m,e)=>((m[e.date]??=[]).push(e),m),{});
+  const monthOf = d => d.slice(0,7); // "YYYY-MM"
+  const INR = n => "₹"+Number(n||0);
+
+  // ==== KHARCH ====
+  let kh = load(K_KEY);
+  const khDate = document.getElementById('khDate');
+  const khItem = document.getElementById('khItem');
+  const khAmt  = document.getElementById('khAmt');
+  const khEdit = document.getElementById('khEdit');
+  const khSaveBtn = document.getElementById('khSaveBtn');
+  const khDays = document.getElementById('khDays');
+  const sumKh = document.getElementById('sumKharch');
+  const btnKhCsv = document.getElementById('exportKhCsv');
+  const btnKhClear = document.getElementById('clearKh');
+
+  khDate.value = todayStr();
+
+  function renderKh(){
+    khDays.innerHTML = "";
+    const grouped = groupByDate(kh);
+    // cards by date (आज, कल, इत्यादि खुद हो जाएगा)
+    Object.keys(grouped).sort((a,b)=>new Date(b)-new Date(a)).forEach(d=>{
+      let dayTotal=0;
+      let rows="";
+      grouped[d].forEach((e,idx)=>{
+        dayTotal+=Number(e.amount);
+        rows+=`
+          <tr>
+            <td>${e.item}</td>
+            <td>${INR(e.amount)}</td>
+            <td>
+              <button class="btn-warn" onclick="editKh(${kh.indexOf(e)})">Edit</button>
+              <button class="btn-danger" onclick="delKh(${kh.indexOf(e)})">Delete</button>
+            </td>
+          </tr>`;
+      });
+      const card=document.createElement("div");
+      card.className="day-card";
+      card.innerHTML=`
+        <div class="day-head">📅 ${d} <span class="muted">कुल: ${INR(dayTotal)}</span></div>
+        <table>
+          <thead><tr><th>Item</th><th>₹</th><th>Action</th></tr></thead>
+          <tbody>${rows}<tr class="total-row"><td colspan="3">कुल: ${INR(dayTotal)}</td></tr></tbody>
+        </table>`;
+      khDays.appendChild(card);
+    });
+    const curMonth = todayStr().slice(0,7);
+    const mTotal = kh.filter(e=>monthOf(e.date)===curMonth).reduce((s,e)=>s+Number(e.amount),0);
+    sumKh.textContent = `इस महीने का कुल खर्च: ${INR(mTotal)}`;
+  }
+
+  document.getElementById('formKharch').onsubmit = (ev)=>{
+    ev.preventDefault();
+    const entry={date:khDate.value,item:khItem.value,amount:Number(khAmt.value)};
+    if(khEdit.value!==""){
+      kh[Number(khEdit.value)]=entry;
+      khEdit.value="";
+      khSaveBtn.textContent="जोड़ें";
+    }else{
+      kh.push(entry);
+    }
+    save(K_KEY,kh); renderKh(); ev.target.reset(); khDate.value=todayStr(); khItem.focus();
+  };
+
+  window.delKh = i => { if(confirm("Delete?")){ kh.splice(i,1); save(K_KEY,kh); renderKh(); } }
+  window.editKh = i => {
+    const e = kh[i]; khDate.value=e.date; khItem.value=e.item; khAmt.value=e.amount; khEdit.value=i; khSaveBtn.textContent="Update";
+    // टैब सुनिश्चित
+    tabKh.click();
+  };
+
+  // CSV Export
+  function toCSV(rows, headers){
+    const esc = v => (`${v??""}`.replace(/"/g,'""'));
+    const head = headers.map(h=>`"${esc(h)}"`).join(",");
+    const body = rows.map(r=>headers.map(h=>`"${esc(r[h])}"`).join(",")).join("\n");
+    return head+"\n"+body;
+  }
+  function downloadCSV(filename, text){
+    const blob = new Blob([text], {type: "text/csv;charset=utf-8;"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  }
+  btnKhCsv.onclick = ()=> downloadCSV(`kharch_${Date.now()}.csv`, toCSV(kh, ["date","item","amount"]));
+  btnKhClear.onclick = ()=>{
+    if(confirm("सभी Kharch हटाने हैं?")){ kh=[]; save(K_KEY,kh); renderKh(); }
+  };
+
+  // ==== INCOME ====
+  let inc = load(I_KEY);
+  const inDate=document.getElementById('inDate');
+  const inItem=document.getElementById('inItem');
+  const inAmt=document.getElementById('inAmt');
+  const inEdit=document.getElementById('inEdit');
+  const inSaveBtn=document.getElementById('inSaveBtn');
+  const inDays=document.getElementById('inDays');
+  const sumIn=document.getElementById('sumIncome');
+  const btnInCsv=document.getElementById('exportInCsv');
+  const btnInClear=document.getElementById('clearIn');
+
+  inDate.value = todayStr();
+
+  function renderIncome(){
+    inDays.innerHTML="";
+    const grouped = groupByDate(inc);
+    Object.keys(grouped).sort((a,b)=>new Date(b)-new Date(a)).forEach(d=>{
+      let dayTotal=0; let rows="";
+      grouped[d].forEach(e=>{
+        dayTotal+=Number(e.amount);
+        rows+=`
+          <tr>
+            <td>${e.item}</td>
+            <td>${INR(e.amount)}</td>
+            <td>
+              <button class="btn-warn" onclick="editIn(${inc.indexOf(e)})">Edit</button>
+              <button class="btn-danger" onclick="delIn(${inc.indexOf(e)})">Delete</button>
+            </td>
+          </tr>`;
+      });
+      const card=document.createElement("div");
+      card.className="day-card";
+      card.innerHTML=`
+        <div class="day-head">📅 ${d} <span class="muted">कुल: ${INR(dayTotal)}</span></div>
+        <table>
+          <thead><tr><th>Source</th><th>₹</th><th>Action</th></tr></thead>
+          <tbody>${rows}<tr class="total-row"><td colspan="3">कुल: ${INR(dayTotal)}</td></tr></tbody>
+        </table>`;
+      inDays.appendChild(card);
+    });
+    const curMonth = todayStr().slice(0,7);
+    const mTotal = inc.filter(e=>monthOf(e.date)===curMonth).reduce((s,e)=>s+Number(e.amount),0);
+    sumIn.textContent = `इस महीने की कुल आय: ${INR(mTotal)}`;
+  }
+
+  document.getElementById('formIncome').onsubmit = (ev)=>{
+    ev.preventDefault();
+    const entry={date:inDate.value,item:inItem.value,amount:Number(inAmt.value)};
+    if(inEdit.value!==""){
+      inc[Number(inEdit.value)]=entry;
+      inEdit.value=""; inSaveBtn.textContent="जोड़ें";
+    }else{
+      inc.push(entry);
+    }
+    save(I_KEY,inc); renderIncome(); ev.target.reset(); inDate.value=todayStr(); inItem.focus();
+  };
+
+  window.delIn = i => { if(confirm("Delete?")){ inc.splice(i,1); save(I_KEY,inc); renderIncome(); } }
+  window.editIn = i => {
+    const e = inc[i]; inDate.value=e.date; inItem.value=e.item; inAmt.value=e.amount; inEdit.value=i; inSaveBtn.textContent="Update";
+    tabIn.click();
+  };
+
+  btnInCsv.onclick = ()=> downloadCSV(`income_${Date.now()}.csv`, toCSV(inc, ["date","item","amount"]));
+  btnInClear.onclick = ()=>{
+    if(confirm("सभी Income हटाने हैं?")){ inc=[]; save(I_KEY,inc); renderIncome(); }
+  };
+
+  // initial render
+  renderKh();
+  renderIncome();
+})();
+</script>
+</body>
+</html>
