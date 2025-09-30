@@ -1,0 +1,123 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: linear-gradient(135deg, #d9f0ff, #f9d9ff);
+  color: #333;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  background: #6a5acd;
+  color: white;
+  padding: 20px;
+  text-align: center;
+  font-size: 1.5rem;
+  letter-spacing: 1px;
+}
+
+main {
+  flex: 1;
+  padding: 20px;
+  max-width: 650px;
+  margin: auto;
+}
+
+form {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  transition: transform 0.2s ease;
+}
+form:hover {
+  transform: scale(1.02);
+}
+form label {
+  display: block;
+  margin: 10px 0 5px;
+}
+form input, form textarea, form button {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border: 1px solid #bbb;
+  font-size: 1rem;
+}
+form button {
+  background: #6a5acd;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+}
+form button:hover {
+  background: #483d8b;
+}
+
+/* Filter + Search */
+.filters {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.filters select, .filters input {
+  width: 48%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #aaa;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+ul li {
+  background: white;
+  margin-bottom: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: 0.2s;
+}
+ul li.done {
+  text-decoration: line-through;
+  background: #d4ffd4;
+}
+ul li:hover {
+  transform: translateX(5px);
+}
+
+.task-info {
+  flex: 1;
+}
+
+.actions button {
+  margin-left: 8px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.actions .done-btn {
+  background: #28a745;
+  color: white;
+}
+.actions .delete-btn {
+  background: #dc3545;
+  color: white;
+}
+
+footer {
+  background: #6a5acd;
+  text-align: center;
+  color: white;
+  padding: 10px;
+}

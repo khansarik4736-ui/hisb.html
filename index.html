@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Work Details App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>📋 Work Details App</h1>
+  </header>
+
+  <main>
+    <form id="workForm">
+      <label for="task">Work Title:</label>
+      <input type="text" id="task" required placeholder="Enter task name...">
+
+      <label for="desc">Description:</label>
+      <textarea id="desc" rows="3" placeholder="Write short description..."></textarea>
+
+      <label for="date">Deadline:</label>
+      <input type="date" id="date" required>
+
+      <button type="submit">➕ Add Work</button>
+    </form>
+
+    <!-- Filter and Search -->
+    <div class="filters">
+      <select id="filter">
+        <option value="all">All Works</option>
+        <option value="pending">Pending Works</option>
+        <option value="done">Completed Works</option>
+      </select>
+      <input type="text" id="search" placeholder="🔍 Search work...">
+    </div>
+
+    <section>
+      <h2>📑 Work List</h2>
+      <ul id="workList"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>✨ Designed by You</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
