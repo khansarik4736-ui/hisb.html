@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aliya Racing Game - Home</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(#87ceeb, #f0f0f0);
+    }
+    .home-container {
+      text-align: center;
+      background: rgba(0,0,0,0.75);
+      color: white;
+      padding: 50px 40px;
+      border-radius: 20px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.5);
+      max-width: 420px;
+      animation: fadeIn 1.2s ease;
+    }
+    h1 {
+      font-size: 2.6em;
+      margin-bottom: 15px;
+    }
+    p {
+      font-size: 1.1em;
+      margin-bottom: 25px;
+      opacity: 0.85;
+    }
+    button {
+      padding: 14px 28px;
+      font-size: 18px;
+      background-color: #00c853;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+    button:hover {
+      background-color: #00a344;
+      transform: scale(1.05);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+      <a harf="new game.html">start game</a>
+
+  <div class="home-container">
+    <h1>Aliya Racing Game</h1>
+    <p>Press the button below to start your racing adventure!</p>
+    <button onclick="window.location.href='game.html'">Start Game</button>
+  </div>
+</body>
+</html>
